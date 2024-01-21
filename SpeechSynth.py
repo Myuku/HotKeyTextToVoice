@@ -1,19 +1,15 @@
 from txtai.pipeline import TextToSpeech
 import soundfile as sf
 import AudioToMic as am
-
-userDict = {
-    "ur": "your",
-    "whatda": "what the",
-    "nou": "no you",
-    "kinda": "kind of",
-    "im": "I'm",
-    "cuz": "kuz",
-    "lmao": "le mao"
-}
-
+import json
 
 def applyUserDict(text: str):
+
+    with open("userDict.txt") as file:
+        userDict = json.load(file)
+    file.close()
+    userDict["type"] = "dictionary"
+    
     words = text.split()
     for i, word in enumerate(words):
         if word in userDict.keys():
@@ -26,6 +22,7 @@ class SpeechSynth():
         self.tts = TextToSpeech()
         
     def read(self, text: str):
+        #message = text
         message = applyUserDict(text);  
         print(message)      
         speech, rate = self.tts(message), 22050

@@ -9,6 +9,7 @@ from PyQt5.QtGui import QIcon
 
 import SpeechSynth as ss
 
+
 class MainWindow(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
@@ -42,6 +43,15 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.message)
         
     def _init_systray(self):
+        
+        def openDict():
+            import subprocess as sp
+            
+            programName = "notepad.exe"
+            fileName = "userDict.txt"
+            editing = sp.Popen([programName, fileName])
+            editing.wait()
+
         # Adding an icon 
         icon = QIcon("icon.ico") 
         
@@ -51,23 +61,27 @@ class MainWindow(QMainWindow):
         self.tray.setVisible(True) 
         
         # Creating the options 
-        settingsAction = QAction("Settings", self) 
         showAction = QAction("Show", self) 
         hideAction = QAction("Hide", self)
         quitAction = QAction("Quit", self)
+        settingsAction = QAction("Settings", self) 
+        dictAction = QAction("Edit Dictionary", self)
         showAction.triggered.connect(self.show)
         hideAction.triggered.connect(self.hide)
         quitAction.triggered.connect(app.quit)
+        # TODO: Settings Action
+        dictAction.triggered.connect(openDict)
         
         menu = QMenu() 
-        menu.addAction(settingsAction) 
         menu.addAction(showAction) 
         menu.addAction(hideAction)
         menu.addAction(quitAction) 
+        menu.addAction(settingsAction) 
+        menu.addAction(dictAction)
         
         self.tray.setContextMenu(menu)
         self.tray.show()
-        
+    
     def eventFilter(self, obj, event):
         if event.type() == qtc.QEvent.KeyPress and obj is self.message:
             if event.key() == Qt.Key_Return and self.message.hasFocus():

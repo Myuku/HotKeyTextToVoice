@@ -1,0 +1,11 @@
+{
+    "ur": "your",
+    "whatda": "what the",
+    "nou": "no you",
+    "kinda": "kind of",
+    "im": "I'm",
+    "cuz": "kuz",
+    "lmao": "le mao",
+    "dog": "doggo",
+    ">:C": "[Gherrrrr]"
+}
