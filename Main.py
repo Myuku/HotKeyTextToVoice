@@ -44,6 +44,7 @@ class MainWindow(QMainWindow):
         font.setPointSize(27)
         
         self.message.setFont(font)
+        self.message.setPlaceholderText("Your Message...")
         self.message.installEventFilter(self)
         self.setCentralWidget(self.message)
         
