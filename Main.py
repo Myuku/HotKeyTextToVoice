@@ -1,14 +1,18 @@
 import sys
+import subprocess as sp
+from pynput import keyboard
 
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5 import QtCore as qtc
-from PyQt5.QtWidgets import QMainWindow, QApplication, qApp, QSystemTrayIcon, QMenu, QAction
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtWidgets import QMainWindow, QApplication, qApp, QSystemTrayIcon, QMenu, QAction, QMessageBox
+from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal
 from PyQt5.QtGui import QIcon
 
 import SpeechSynth as ss
 
+class Forwarder(QObject):
+    signal = pyqtSignal()
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -16,12 +20,13 @@ class MainWindow(QMainWindow):
         self._init_boundary()
         self._init_message()
         self._init_systray()
+        self.update()
         
     def _init_boundary(self):
         self.setWindowFlags(
             Qt.WindowStaysOnTopHint |
-            Qt.FramelessWindowHint |
-            Qt.X11BypassWindowManagerHint
+            Qt.Tool |
+            Qt.FramelessWindowHint
         )
         self.setGeometry(
             qtw.QStyle.alignedRect(
@@ -43,19 +48,13 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.message)
         
     def _init_systray(self):
-        
         def openDict():
-            import subprocess as sp
-            
             programName = "notepad.exe"
             fileName = "userDict.txt"
             editing = sp.Popen([programName, fileName])
             editing.wait()
-
-        # Adding an icon 
-        icon = QIcon("icon.ico") 
-        
-        # Adding item on the menu bar 
+            
+        icon = QIcon("icon.ico")  
         self.tray = QSystemTrayIcon(self) 
         self.tray.setIcon(icon) 
         self.tray.setVisible(True) 
@@ -81,21 +80,45 @@ class MainWindow(QMainWindow):
         
         self.tray.setContextMenu(menu)
         self.tray.show()
+        
+    def hotkey(self):
+        forwarder = Forwarder(parent=self)
+        forwarder.signal.connect(self.wakeUp)
+
+        def for_canonical(f):
+            return lambda k: f(listener.canonical(k))
+
+        hotkey = keyboard.HotKey(
+            keyboard.HotKey.parse('<alt>+x'), forwarder.signal.emit)
+        listener = keyboard.Listener(
+                on_press=for_canonical(hotkey.press),
+                on_release=for_canonical(hotkey.release)
+        )
+        listener.start()
+        
+    def wakeUp(self):
+        self.show()
+        self.setFocus()
+        self.raise_()
+        self.activateWindow()
+        self.message.setFocus()
     
     def eventFilter(self, obj, event):
         if event.type() == qtc.QEvent.KeyPress and obj is self.message:
-            if event.key() == Qt.Key_Return and self.message.hasFocus():
+            if event.key() == Qt.Key_Return:
                 if len(self.message.text()) == 0:
                     self.hide()
                 else: 
                     self.tts.read(self.message.text())
                     self.message.clear()
                     self.hide()
-        return super().eventFilter(obj, event)
+        return super().eventFilter(obj, event)    
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
+    
     myWindow = MainWindow()
     myWindow.show()
-    app.exec_()
+    myWindow.hotkey()
+    sys.exit(app.exec_())
