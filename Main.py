@@ -1,15 +1,14 @@
-import sys
-import subprocess as sp
+import os, sys
 from pynput import keyboard
 
-from PyQt5 import QtWidgets as qtw
-from PyQt5 import QtGui as qtg
-from PyQt5 import QtCore as qtc
-from PyQt5.QtWidgets import QMainWindow, QApplication, qApp, QSystemTrayIcon, QMenu, QAction, QMessageBox
-from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal
+from PyQt5.QtWidgets import QMainWindow, QApplication, qApp, QSystemTrayIcon, QMenu, QAction, QErrorMessage, QStyle, QLineEdit
+from PyQt5.QtCore import Qt, QSize, QObject, pyqtSignal, QEvent
 from PyQt5.QtGui import QIcon
 
 import SpeechSynth as ss
+
+APPLICATION_PATH = os.path.dirname(sys.executable)
+# APPLICATION_PATH = os.getcwd()
 
 class Forwarder(QObject):
     signal = pyqtSignal()
@@ -29,7 +28,7 @@ class MainWindow(QMainWindow):
             Qt.FramelessWindowHint
         )
         self.setGeometry(
-            qtw.QStyle.alignedRect(
+            QStyle.alignedRect(
                 Qt.LeftToRight, Qt.AlignCenter,
                 QSize(440, 64),
                 qApp.desktop().availableGeometry()
@@ -37,7 +36,7 @@ class MainWindow(QMainWindow):
         )
         
     def _init_message(self):
-        self.message = qtw.QLineEdit()
+        self.message = QLineEdit()
         self.tts = ss.SpeechSynth()
         
         font = self.message.font()
@@ -50,12 +49,15 @@ class MainWindow(QMainWindow):
         
     def _init_systray(self):
         def openDict():
-            programName = "notepad.exe"
-            fileName = "userDict.txt"
-            editing = sp.Popen([programName, fileName])
-            editing.wait()
+            os.startfile(f'{APPLICATION_PATH}/userDict.txt')
             
-        icon = QIcon("icon.ico")  
+        def errorPrompt():
+            errorDialog = QErrorMessage()
+            errorDialog.showMessage('Oh no!')
+            errorDialog.setWindowTitle("Error")
+            errorDialog.exec_()
+            
+        icon = QIcon(f'{APPLICATION_PATH}/icon.ico')  
         self.tray = QSystemTrayIcon(self) 
         self.tray.setIcon(icon) 
         self.tray.setVisible(True) 
@@ -69,7 +71,7 @@ class MainWindow(QMainWindow):
         showAction.triggered.connect(self.show)
         hideAction.triggered.connect(self.hide)
         quitAction.triggered.connect(app.quit)
-        # TODO: Settings Action
+        settingsAction.triggered.connect(errorPrompt)
         dictAction.triggered.connect(openDict)
         
         menu = QMenu() 
@@ -105,7 +107,7 @@ class MainWindow(QMainWindow):
         self.message.setFocus()
     
     def eventFilter(self, obj, event):
-        if event.type() == qtc.QEvent.KeyPress and obj is self.message:
+        if event.type() == QEvent.KeyPress and obj is self.message:
             if event.key() == Qt.Key_Return:
                 if len(self.message.text()) == 0:
                     self.hide()

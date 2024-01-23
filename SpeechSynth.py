@@ -1,11 +1,14 @@
+import os, sys, json
 from txtai.pipeline import TextToSpeech
 import soundfile as sf
 import AudioToMic as am
-import json
+
+APPLICATION_PATH = os.path.dirname(sys.executable)
+# APPLICATION_PATH = os.getcwd()
 
 def applyUserDict(text: str):
 
-    with open("userDict.txt") as file:
+    with open(f'{APPLICATION_PATH}/userDict.txt') as file:
         userDict = json.load(file)
     file.close()
     userDict["type"] = "dictionary"
@@ -22,15 +25,14 @@ class SpeechSynth():
         self.tts = TextToSpeech()
         
     def read(self, text: str):
-        #message = text
         message = applyUserDict(text);  
         print(message)      
         speech, rate = self.tts(message), 22050
         try:
-            sf.write("speech.wav", speech, rate)
+            sf.write(f'{APPLICATION_PATH}/speech.wav', speech, rate)
             self.mic.play(1)
         except:
-            sf.write("speech2.wav", speech, rate)
+            sf.write(f'{APPLICATION_PATH}/speech2.wav', speech, rate)
             self.mic.play(2)
         
     
